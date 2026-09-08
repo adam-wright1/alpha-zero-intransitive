@@ -78,7 +78,7 @@ class Intransitive(Game):
 
         return [I, A, R, M]
 
-    # TODO should moves since capture be here?
+    # TODO should moves since capture be here? For now, yes
     def stringRepresentation(self, board):
         return (board.blue_rock, board.blue_paper, board.blue_scissors,
                 board.red_rock, board.red_paper, board.red_scissors,

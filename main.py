@@ -7,19 +7,29 @@ from intransitive.IntransitiveGame import Intransitive as Game
 from intransitive.pytorch.NNet import NNetWrapper as nn
 from utils import *
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--numIters', type=int, default=15)
+parser.add_argument('--numEps', type=int, default=40)
+parser.add_argument('--numMCTSSims', type=int, default=40)
+parser.add_argument('--arenaCompare', type=int, default=20)
+parser.add_argument('--cpuct', type=float, default=1.0)
+cli_args = parser.parse_args()
+
 log = logging.getLogger(__name__)
 
 coloredlogs.install(level='INFO')  # Change this to DEBUG to see more info.
 
 args = dotdict({
-    'numIters': 15,
-    'numEps': 40,
+    'numIters': cli_args.numIters,
+    'numEps': cli_args.numEps,
     'tempThreshold': 15,
     'updateThreshold': 0.6,
     'maxlenOfQueue': 200000,
-    'numMCTSSims': 40,
-    'arenaCompare': 20,
-    'cpuct': 1,
+    'numMCTSSims': cli_args.numMCTSSims,
+    'arenaCompare': cli_args.arenaCompare,
+    'cpuct': cli_args.cpuct,
     'checkpoint': './temp/',
     'load_model': False,
     'load_folder_file': ('./temp/', 'best.pth.tar'),
