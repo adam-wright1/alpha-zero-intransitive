@@ -15,6 +15,7 @@ parser.add_argument('--numEps', type=int, default=40)
 parser.add_argument('--numMCTSSims', type=int, default=40)
 parser.add_argument('--arenaCompare', type=int, default=20)
 parser.add_argument('--cpuct', type=float, default=1.0)
+parser.add_argument('--load_model', action='store_true')
 cli_args = parser.parse_args()
 
 log = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ args = dotdict({
     'arenaCompare': cli_args.arenaCompare,
     'cpuct': cli_args.cpuct,
     'checkpoint': './temp/',
-    'load_model': False,
+    'load_model': cli_args.load_model,
     'load_folder_file': ('./temp/', 'best.pth.tar'),
     'numItersForTrainExamplesHistory': 20,
 })

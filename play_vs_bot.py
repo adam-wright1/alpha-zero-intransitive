@@ -12,7 +12,7 @@ player = 1  # player starts
 
 # --- Load trained bot ---
 nnet = NNetWrapper(game)
-nnet.load_checkpoint(folder='./temp/', filename='best.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare/', filename='best.pth.tar')
 
 mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1})
 mcts = MCTS(game, nnet, mcts_args)

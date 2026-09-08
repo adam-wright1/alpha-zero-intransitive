@@ -71,7 +71,7 @@ def fen_to_board(fen_fields, n):
 game = Intransitive()
 nnet = NNetWrapper(game)
 # THIS IS IMPORTANT
-nnet.load_checkpoint(folder='./temp/', filename='temp.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare/', filename='best.pth.tar')
 
 # this 25 is very important
 mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1})
