@@ -9,6 +9,24 @@
     <div id="status"></div>
     <div id="board"></div>
     <button id="reset-btn">Reset</button>
+
+    <div id="bvb-controls">
+        <button id="bvb-mode-btn">Bot vs Bot Mode</button>
+        <div id="bvb-setup" style="display:none;">
+            <select id="checkpoint1"></select>
+            vs
+            <select id="checkpoint2"></select>
+            <button id="start-bvb-btn">Start</button>
+        </div>
+        <div id="bvb-nav" style="display:none;">
+            <button id="prev-btn">◀ Prev</button>
+            <span id="move-counter"></span>
+            <button id="next-btn">Next ▶</button>
+            <br>
+            <input type="range" id="move-slider" min="0" max="0" value="0">
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

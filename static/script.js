@@ -75,3 +75,53 @@ document.getElementById('reset-btn').addEventListener('click', () => {
 });
 
 fetch('/state').then(r => r.json()).then(renderBoard);
+
+let bvbActive = false;
+
+document.getElementById('bvb-mode-btn').addEventListener('click', () => {
+    document.getElementById('bvb-setup').style.display = 'block';
+    fetch('/checkpoints').then(r => r.json()).then(ckpts => {
+        const opts = ckpts.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('checkpoint1').innerHTML = opts;
+        document.getElementById('checkpoint2').innerHTML = opts;
+    });
+});
+
+document.getElementById('next-btn').addEventListener('click', () => {
+    fetch('/bvb_forward', {method: 'POST'}).then(r => r.json()).then(renderBvb);
+});
+
+document.getElementById('prev-btn').addEventListener('click', () => {
+    fetch('/bvb_backward', {method: 'POST'}).then(r => r.json()).then(renderBvb);
+});
+
+document.getElementById('start-bvb-btn').addEventListener('click', () => {
+    const ckpt1 = document.getElementById('checkpoint1').value;
+    const ckpt2 = document.getElementById('checkpoint2').value;
+
+    fetch('/start_bvb', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({checkpoint1: ckpt1, checkpoint2: ckpt2})
+    }).then(r => r.json()).then(data => {
+        document.getElementById('bvb-setup').style.display = 'none';
+        document.getElementById('bvb-nav').style.display = 'block';
+        const slider = document.getElementById('move-slider');
+        slider.max = data.total_moves;
+        slider.value = 1;
+        fetch('/bvb_state').then(r => r.json()).then(renderBvb);
+    });
+});
+
+document.getElementById('move-slider').addEventListener('input', (e) => {
+    fetch('/bvb_seek', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({index: parseInt(e.target.value)})
+    }).then(r => r.json()).then(renderBvb);
+});
+
+function renderBvb(data) {
+    renderBoard(data);
+    document.getElementById('move-counter').textContent = `Move ${data.move_number} / ${data.total_moves}`;
+}
