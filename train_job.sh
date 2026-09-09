@@ -9,4 +9,4 @@
 
 cd /scratch/users/wright1/alpha-zero-intransitive
 source venv/bin/activate
-python3 main.py --numIters 15 --numEps 40 --numMCTSSims 70 --arenaCompare 20 --cpuct 1.0 --load_model
+python3 main.py --numIters 15 --numEps 40 --numMCTSSims 70 --arenaCompare 20 --cpuct 1.0
