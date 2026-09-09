@@ -178,8 +178,9 @@ class Board():
                 return 1
 
         # check 100 ply (200 move) rule
+        # this is negative to disincentivize defensive play
         if self.moves_since_capture >= 200:
-            return 1e-4
+            return -0.3
 
         # check valid moves/stalemate
         if not any(self._get_legal_moves(next_player_str)):
