@@ -4,6 +4,7 @@ cachetools
 certifi
 charset-normalizer
 coloredlogs
+flask
 flatbuffers
 gast
 google-auth
