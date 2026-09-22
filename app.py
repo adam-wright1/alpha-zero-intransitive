@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 game = Intransitive()
 nnet = NNetWrapper(game)
-nnet.load_checkpoint(folder='./temp_farmshare_v4/', filename='best.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare_v5/', filename='best.pth.tar')
 mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1})
 
 state = {
