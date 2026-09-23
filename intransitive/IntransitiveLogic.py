@@ -175,19 +175,17 @@ class Board():
                 return -1
         else:
             if (self.blue_all & (1 << 8)) != 0:
-                return 1
+                return -1
 
         # check 100 ply (200 move) rule
         # this is negative to disincentivize defensive play
+        # TODO maybe re-add a slight negative.
         if self.moves_since_capture >= 200:
-            return -0.2
+            return 0
 
         # check valid moves/stalemate
         if not any(self._get_legal_moves(next_player_str)):
-            if next_player_str == 'blue':
-                return -1
-            else:
-                return 1
+            return -1
 
         return 0
 
@@ -199,7 +197,8 @@ class Board():
         piece_type = self._get_type(orig_square)
 
         # detects capture
-        if self.all & (1 << dest_square) != 0:
+        captured = self.all & (1 << dest_square) != 0
+        if captured:
             self.moves_since_capture = 0
         else:
             self.moves_since_capture += 1
@@ -244,6 +243,8 @@ class Board():
             self.blue_scissors &= ~(1 << dest_square)
 
         self.all = self.blue_all | self.red_all
+
+        return captured
 
     def copy(self):
         new_board = Board.__new__(Board)
@@ -364,3 +365,17 @@ class Board():
         m_dir = self.M_DIRECTIONS[dir]
 
         return m_square, m_dir
+    
+    def _chebyshev_distance(self, square_a, square_b):
+        row_a, col_a = divmod(square_a, self.n)
+        row_b, col_b = divmod(square_b, self.n)
+        return max(abs(row_a - row_b), abs(col_a - col_b))
+
+    def _min_distance_to_square(self, bitboard, target_square):
+        best = None
+        for square in range(self.n * self.n):
+            if (bitboard >> square) & 1:
+                d = self._chebyshev_distance(square, target_square)
+                if best is None or d < best:
+                    best = d
+        return best

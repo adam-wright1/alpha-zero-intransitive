@@ -134,6 +134,6 @@ class NNetWrapper(NeuralNet):
                     col = square % n
                     planes[i][row][col] = 1
 
-        planes[6] = board.moves_since_capture / 100.0
+        planes[6] = board.moves_since_capture / 200.0
 
         return planes
