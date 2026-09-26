@@ -14,7 +14,7 @@ app = Flask(__name__)
 game = Intransitive()
 nnet = NNetWrapper(game)
 # default bot playing mode
-nnet.load_checkpoint(folder='./temp_farmshare_v7/', filename='temp.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare_v8/', filename='temp.pth.tar')
 mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1})
 
 state = {
@@ -93,7 +93,7 @@ def make_move():
     if not valids[action]:
         return jsonify({'error': 'Illegal move'}), 400
 
-    board, player = game.getNextState(board, player, action)
+    board, player, _ = game.getNextState(board, player, action)
     state['board'], state['player'] = board, player
 
     return state_json()
@@ -107,7 +107,7 @@ def bot_move():
 
     canonical = game.getCanonicalForm(board, player)
     bot_action = int(np.argmax(state['mcts'].getActionProb(canonical, temp=0)))
-    board, player = game.getNextState(board, player, bot_action)
+    board, player, _ = game.getNextState(board, player, bot_action)
     state['board'], state['player'] = board, player
 
     return state_json()
@@ -144,7 +144,7 @@ def start_bvb():
             action = int(np.argmax(players[player].getActionProb(canonical, temp=0)))
             if torch.backends.mps.is_available():
                 torch.mps.synchronize()
-            board, player = game.getNextState(board, player, action)
+            board, player, _ = game.getNextState(board, player, action)
             history.append((board, player))
             move_count += 1
             print(f"Computed move {move_count}", flush=True)

@@ -106,7 +106,7 @@ while game.getGameEnded(board, player) == 0:
     else:
         action = human_player.play(canonical_board, player)
 
-    board, player = game.getNextState(board, player, action)
+    board, player, _ = game.getNextState(board, player, action)
     Intransitive.display(board)
 
 result = game.getGameEnded(board, player)

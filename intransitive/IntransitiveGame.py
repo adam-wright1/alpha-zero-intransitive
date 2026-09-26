@@ -37,8 +37,8 @@ class Intransitive(Game):
             dest_square = n2 - 1 - dest_square
 
         player_str = 'blue' if player == 1 else 'red'
-        new_board.execute_move((orig_square, dest_square), player_str)
-        return new_board, -player
+        captured = new_board.execute_move((orig_square, dest_square), player_str)
+        return new_board, -player, captured
 
     def getValidMoves(self, board, player):
         player_str = 'blue' if player == 1 else 'red'

@@ -66,7 +66,7 @@ class Arena():
             if hasattr(opponent, "notify"):
                 opponent.notify(board, action)
 
-            board, curPlayer = self.game.getNextState(board, curPlayer, action)
+            board, curPlayer, _ = self.game.getNextState(board, curPlayer, action)
 
         for player in players[0], players[2]:
             if hasattr(player, "endGame"):

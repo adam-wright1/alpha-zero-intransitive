@@ -30,7 +30,7 @@ while game.getGameEnded(board, player) == 0:
     else:
         action = bot_play(canonical_board)
 
-    board, player = game.getNextState(board, player, action)
+    board, player, _ = game.getNextState(board, player, action)
     Intransitive.display(board)
 
 result = game.getGameEnded(board, player)

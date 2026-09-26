@@ -13,6 +13,7 @@ from MCTS import MCTS
 
 log = logging.getLogger(__name__)
 
+CAPTURE_BONUS = 0.05
 
 class Coach():
     """
@@ -61,12 +62,21 @@ class Coach():
                 trainExamples.append([b, self.curPlayer, p, None])
 
             action = np.random.choice(len(pi), p=pi)
-            board, self.curPlayer = self.game.getNextState(board, self.curPlayer, action)
+            mover = self.curPlayer
+            board, self.curPlayer, captured = self.game.getNextState(board, self.curPlayer, action)
+
+            if captured:
+                # bonus for the mover's just-added examples (all symmetries of this ply)
+                for x in trainExamples[-len(sym):]:
+                    if x[1] == mover:
+                        x[3] = CAPTURE_BONUS if x[3] is None else x[3] + CAPTURE_BONUS
+                    else:
+                        x[3] = -CAPTURE_BONUS if x[3] is None else x[3] - CAPTURE_BONUS
 
             r = self.game.getGameEnded(board, self.curPlayer)
 
             if r != 0:
-                return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer))) for x in trainExamples]
+                return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer)) + (x[3] or 0)) for x in trainExamples]
 
     def learn(self):
         """
