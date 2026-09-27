@@ -13,7 +13,7 @@ from MCTS import MCTS
 
 log = logging.getLogger(__name__)
 
-CAPTURE_BONUS = 0.05
+CAPTURE_BONUS = 0.15
 PROXIMITY_BONUS = 0.01
 
 class Coach():
@@ -85,7 +85,12 @@ class Coach():
             r = self.game.getGameEnded(board, self.curPlayer)
 
             if r != 0:
-                return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer)) + (x[3] or 0)) for x in trainExamples]
+                result = []
+                for x in trainExamples:
+                    v = r * ((-1) ** (x[1] != self.curPlayer)) + (x[3] or 0)
+                    v = max(-1.0, min(1.0, v))
+                    result.append((x[0], x[2], v))
+                return result
         
     def learn(self):
         """

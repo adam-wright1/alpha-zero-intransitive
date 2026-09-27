@@ -14,8 +14,8 @@ app = Flask(__name__)
 game = Intransitive()
 nnet = NNetWrapper(game)
 # default bot playing mode
-nnet.load_checkpoint(folder='./temp_farmshare_v9/', filename='temp.pth.tar')
-mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1})
+nnet.load_checkpoint(folder='./temp_farmshare_v10/', filename='temp.pth.tar')
+mcts_args = dotdict({'numMCTSSims': 70, 'cpuct': 1})
 
 state = {
     'board': game.getInitBoard(),
