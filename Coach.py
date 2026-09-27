@@ -14,6 +14,7 @@ from MCTS import MCTS
 log = logging.getLogger(__name__)
 
 CAPTURE_BONUS = 0.05
+PROXIMITY_BONUS = 0.01
 
 class Coach():
     """
@@ -63,21 +64,29 @@ class Coach():
 
             action = np.random.choice(len(pi), p=pi)
             mover = self.curPlayer
+            mover_str = 'blue' if mover == 1 else 'red'
+            mover_bitboard_before = board.blue_all if mover_str == 'blue' else board.red_all
+            goal_square = 8 if mover_str == 'blue' else 72
+            dist_before = board._min_distance_to_square(mover_bitboard_before, goal_square)
+
             board, self.curPlayer, captured = self.game.getNextState(board, self.curPlayer, action)
 
+            mover_bitboard_after = board.blue_all if mover_str == 'blue' else board.red_all
+            dist_after = board._min_distance_to_square(mover_bitboard_after, goal_square)
+            progress = dist_before - dist_after  # positive = advanced toward goal
+
+            shaped_bonus = progress * PROXIMITY_BONUS
             if captured:
-                # bonus for the mover's just-added examples (all symmetries of this ply)
-                for x in trainExamples[-len(sym):]:
-                    if x[1] == mover:
-                        x[3] = CAPTURE_BONUS if x[3] is None else x[3] + CAPTURE_BONUS
-                    else:
-                        x[3] = -CAPTURE_BONUS if x[3] is None else x[3] - CAPTURE_BONUS
+                shaped_bonus += CAPTURE_BONUS
+
+            for x in trainExamples[-len(sym):]:
+                x[3] = shaped_bonus if x[3] is None else x[3] + shaped_bonus
 
             r = self.game.getGameEnded(board, self.curPlayer)
 
             if r != 0:
                 return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer)) + (x[3] or 0)) for x in trainExamples]
-
+        
     def learn(self):
         """
         Performs numIters iterations with numEps episodes of self-play in each
