@@ -51,6 +51,8 @@ class Coach():
         board = self.game.getInitBoard()
         self.curPlayer = 1
         episodeStep = 0
+        last_examples_by_player = {1: (0, 0), -1: (0, 0)}
+        capture_count = 0 # TODO this is debug
 
         while True:
             episodeStep += 1
@@ -62,6 +64,9 @@ class Coach():
             for b, p in sym:
                 trainExamples.append([b, self.curPlayer, p, None])
 
+            start_idx = len(trainExamples) - len(sym)
+            last_examples_by_player[self.curPlayer] = (start_idx, len(trainExamples))
+
             action = np.random.choice(len(pi), p=pi)
             mover = self.curPlayer
             mover_str = 'blue' if mover == 1 else 'red'
@@ -71,6 +76,9 @@ class Coach():
 
             board, self.curPlayer, captured = self.game.getNextState(board, self.curPlayer, action)
 
+            if captured:  # TODO this is debug
+                capture_count += 1
+
             mover_bitboard_after = board.blue_all if mover_str == 'blue' else board.red_all
             dist_after = board._min_distance_to_square(mover_bitboard_after, goal_square)
             progress = dist_before - dist_after  # positive = advanced toward goal
@@ -79,18 +87,22 @@ class Coach():
             if captured:
                 shaped_bonus += CAPTURE_BONUS
 
-            for x in trainExamples[-len(sym):]:
+            for x in trainExamples[start_idx:len(trainExamples)]:
                 x[3] = shaped_bonus if x[3] is None else x[3] + shaped_bonus
+
+            # penalize the opponent's most recent examples if their piece was just captured
+            if captured:
+                opp = -mover
+                opp_range = last_examples_by_player[opp]
+                if opp_range is not None:
+                    for x in trainExamples[opp_range[0]:opp_range[1]]:
+                        x[3] = -CAPTURE_BONUS if x[3] is None else x[3] - CAPTURE_BONUS
 
             r = self.game.getGameEnded(board, self.curPlayer)
 
             if r != 0:
-                result = []
-                for x in trainExamples:
-                    v = r * ((-1) ** (x[1] != self.curPlayer)) + (x[3] or 0)
-                    v = max(-1.0, min(1.0, v))
-                    result.append((x[0], x[2], v))
-                return result
+                log.info(f'Episode ended after {episodeStep} plies with {capture_count} captures, result={r}')  # TODO this is debug
+                return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer)) + (x[3] or 0)) for x in trainExamples]
         
     def learn(self):
         """
