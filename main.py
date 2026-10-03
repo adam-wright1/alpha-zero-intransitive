@@ -36,6 +36,8 @@ args = dotdict({
     'numMCTSSims': cli_args.numMCTSSims,
     'arenaCompare': cli_args.arenaCompare,
     'cpuct': cli_args.cpuct,
+    'dirichlet_alpha': 0.3,      # NEW
+    'dirichlet_epsilon': 0.25,   # NEW
     'checkpoint': './temp/',
     'load_model': cli_args.load_model,
     'load_folder_file': (checkpoint_folder, checkpoint_filename),
