@@ -14,7 +14,7 @@ app = Flask(__name__)
 game = Intransitive()
 nnet = NNetWrapper(game)
 # default bot playing mode
-nnet.load_checkpoint(folder='./temp_farmshare_v11/', filename='best.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare_v10/', filename='best.pth.tar')
 mcts_args = dotdict({'numMCTSSims': 70, 'cpuct': 1})
 
 state = {
@@ -137,7 +137,7 @@ def start_bvb():
         player = 1
         history = [(board, player)]
 
-        max_moves = 300
+        max_moves = 1000
         move_count = 0
         while game.getGameEnded(board, player) == 0 and move_count < max_moves:
             canonical = game.getCanonicalForm(board, player)

@@ -35,7 +35,7 @@ class MCTS():
                    proportional to Nsa[(s,a)]**(1./temp)
         """
         for i in range(self.args.numMCTSSims):
-            self.search(canonicalBoard)
+            self.search(canonicalBoard, is_root=True)
 
         s = self.game.stringRepresentation(canonicalBoard)
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
@@ -52,7 +52,7 @@ class MCTS():
         probs = [x / counts_sum for x in counts]
         return probs
 
-    def search(self, canonicalBoard):
+    def search(self, canonicalBoard, is_root=False):
         """
         This function performs one iteration of MCTS. It is recursively called
         till a leaf node is found. The action chosen at each node is one that
@@ -77,22 +77,16 @@ class MCTS():
         if s not in self.Es:
             self.Es[s] = self.game.getGameEnded(canonicalBoard, 1)
         if self.Es[s] != 0:
-            # terminal node
             return -self.Es[s]
 
         if s not in self.Ps:
-            # leaf node
             self.Ps[s], v = self.nnet.predict(canonicalBoard)
             valids = self.game.getValidMoves(canonicalBoard, 1)
-            self.Ps[s] = self.Ps[s] * valids  # masking invalid moves
+            self.Ps[s] = self.Ps[s] * valids
             sum_Ps_s = np.sum(self.Ps[s])
             if sum_Ps_s > 0:
-                self.Ps[s] /= sum_Ps_s  # renormalize
+                self.Ps[s] /= sum_Ps_s
             else:
-                # if all valid moves were masked make all valid moves equally probable
-
-                # NB! All valid moves may be masked if either your NNet architecture is insufficient or you've get overfitting or something else.
-                # If you have got dozens or hundreds of these messages you should pay attention to your NNet and/or training process.   
                 log.error("All valid moves were masked, doing a workaround.")
                 self.Ps[s] = self.Ps[s] + valids
                 self.Ps[s] /= np.sum(self.Ps[s])
@@ -102,18 +96,29 @@ class MCTS():
             return -v
 
         valids = self.Vs[s]
+
+        # inject Dirichlet noise at the root, once per getActionProb call's first expansion
+        if is_root and getattr(self.args, 'dirichlet_alpha', None) and s not in getattr(self, 'noise_applied', {}):
+            if not hasattr(self, 'noise_applied'):
+                self.noise_applied = {}
+            noise = np.random.dirichlet([self.args.dirichlet_alpha] * int(np.sum(valids)))
+            valid_indices = np.where(valids)[0]
+            epsilon = self.args.dirichlet_epsilon
+            noisy_p = self.Ps[s].copy()
+            for idx, n in zip(valid_indices, noise):
+                noisy_p[idx] = (1 - epsilon) * self.Ps[s][idx] + epsilon * n
+            self.Ps[s] = noisy_p
+            self.noise_applied[s] = True
+
         cur_best = -float('inf')
         best_act = -1
-
-        # pick the action with the highest upper confidence bound
         for a in range(self.game.getActionSize()):
             if valids[a]:
                 if (s, a) in self.Qsa:
                     u = self.Qsa[(s, a)] + self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s]) / (
                             1 + self.Nsa[(s, a)])
                 else:
-                    u = self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)  # Q = 0 ?
-
+                    u = self.args.cpuct * self.Ps[s][a] * math.sqrt(self.Ns[s] + EPS)
                 if u > cur_best:
                     cur_best = u
                     best_act = a
@@ -122,12 +127,11 @@ class MCTS():
         next_s, next_player, _ = self.game.getNextState(canonicalBoard, 1, a)
         next_s = self.game.getCanonicalForm(next_s, next_player)
 
-        v = self.search(next_s)
+        v = self.search(next_s)  # recursive calls are NOT root
 
         if (s, a) in self.Qsa:
             self.Qsa[(s, a)] = (self.Nsa[(s, a)] * self.Qsa[(s, a)] + v) / (self.Nsa[(s, a)] + 1)
             self.Nsa[(s, a)] += 1
-
         else:
             self.Qsa[(s, a)] = v
             self.Nsa[(s, a)] = 1
