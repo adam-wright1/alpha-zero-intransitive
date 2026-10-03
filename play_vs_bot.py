@@ -14,7 +14,7 @@ player = 1  # player starts
 nnet = NNetWrapper(game)
 nnet.load_checkpoint(folder='./temp_farmshare_v2/', filename='best.pth.tar')
 
-mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1})
+mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1, 'dirichlet_alpha': None, 'dirichlet_epsilon': 0.25})
 mcts = MCTS(game, nnet, mcts_args)
 
 def bot_play(canonical_board):

@@ -74,7 +74,7 @@ nnet = NNetWrapper(game)
 nnet.load_checkpoint(folder='./temp_farmshare/', filename='best.pth.tar')
 
 # this 25 is very important
-mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1})
+mcts_args = dotdict({'numMCTSSims': 25, 'cpuct': 1, 'dirichlet_alpha': None, 'dirichlet_epsilon': 0.25})
 mcts = MCTS(game, nnet, mcts_args)
 
 # default/running state so Python doesn't freak out

@@ -13,7 +13,7 @@ from MCTS import MCTS
 
 log = logging.getLogger(__name__)
 
-CAPTURE_BONUS = 0.15
+CAPTURE_BONUS = 0.3
 PROXIMITY_BONUS = 0.01
 
 class Coach():

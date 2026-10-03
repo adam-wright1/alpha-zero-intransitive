@@ -6,7 +6,7 @@ from intransitive.pytorch.NNet import NNetWrapper
 
 game = Intransitive()
 nnet = NNetWrapper(game)
-nnet.load_checkpoint(folder='./temp_farmshare_v10/', filename='best.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare_v13/', filename='best.pth.tar')
 
 
 def decode_and_describe(board, action):
@@ -46,11 +46,9 @@ run_test("Sparse board", board1, board1._encode_action(40, 41))
 
 # --- Test 2: full starting position, but move one red scissors adjacent to a blue rock ---
 board2 = game.getInitBoard()
-# find a blue rock square and clear a destination next to it, then place a red scissors there
 blue_rock_squares = [sq for sq in range(81) if (board2.blue_rock >> sq) & 1]
 orig_square = blue_rock_squares[0]
 orig_row, orig_col = divmod(orig_square, board2.n)
-# try each direction until we find an empty, in-bounds destination
 dest_square = None
 for dr, dc in board2.DIRECTIONS:
     r, c = orig_row + dr, orig_col + dc
@@ -60,7 +58,6 @@ for dr, dc in board2.DIRECTIONS:
             dest_square = sq
             break
 
-# remove any red piece currently at dest_square (shouldn't be any, but just in case) and place a red scissors there
 board2.red_rock &= ~(1 << dest_square)
 board2.red_paper &= ~(1 << dest_square)
 board2.red_scissors &= ~(1 << dest_square)
@@ -69,3 +66,20 @@ board2.red_all = board2.red_rock | board2.red_paper | board2.red_scissors
 board2.all = board2.blue_all | board2.red_all
 
 run_test("Full board, one exposed red scissors", board2, board2._encode_action(orig_square, dest_square))
+
+# --- Test 3: piece adjacent to goal, clear path ---
+board3 = game.getInitBoard()
+board3.blue_rock = board3.blue_paper = board3.blue_scissors = 0
+board3.red_rock = board3.red_paper = board3.red_scissors = 0
+
+goal_square = 8
+adjacent_square = board3._square(1, 7)  # one king-move away from square 8
+board3.blue_rock = 1 << adjacent_square
+
+board3.blue_all = board3.blue_rock | board3.blue_paper | board3.blue_scissors
+board3.red_all = board3.red_rock | board3.red_paper | board3.red_scissors
+board3.all = board3.blue_all | board3.red_all
+board3.moves_since_capture = 0
+
+expected_action = board3._encode_action(adjacent_square, goal_square)
+run_test("Piece adjacent to empty goal", board3, expected_action)
