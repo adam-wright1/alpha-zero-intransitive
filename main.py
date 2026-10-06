@@ -16,6 +16,7 @@ parser.add_argument('--numEps', type=int, default=40)
 parser.add_argument('--numMCTSSims', type=int, default=40)
 parser.add_argument('--arenaCompare', type=int, default=20)
 parser.add_argument('--cpuct', type=float, default=1.0)
+parser.add_argument('--tempThreshold', type=int, default=15)  # NEW
 parser.add_argument('--load_model', type=str, default='')
 cli_args = parser.parse_args()
 
@@ -30,7 +31,7 @@ checkpoint_folder = checkpoint_folder + '/'
 args = dotdict({
     'numIters': cli_args.numIters,
     'numEps': cli_args.numEps,
-    'tempThreshold': 15,
+    'tempThreshold': cli_args.tempThreshold,
     'updateThreshold': 0.6,
     'maxlenOfQueue': 200000,
     'numMCTSSims': cli_args.numMCTSSims,
