@@ -78,11 +78,19 @@ class Intransitive(Game):
 
         return [I, A, R, M]
 
-    # TODO should moves since capture be here? For now, yes
+
+    # TODO I want a better bucketing algorithm
+    def _bucket_moves_since_capture(self, moves_since_capture):
+        remaining = 200 - moves_since_capture
+        if remaining <= 50:
+            return moves_since_capture  # exact near the cap
+        return (moves_since_capture // 25) * 25  # coarse buckets otherwise
+
     def stringRepresentation(self, board):
+        bucketed = self._bucket_moves_since_capture(board.moves_since_capture)
         return (board.blue_rock, board.blue_paper, board.blue_scissors,
                 board.red_rock, board.red_paper, board.red_scissors,
-                board.moves_since_capture)
+                bucketed)
 
     @staticmethod
     def display(board):

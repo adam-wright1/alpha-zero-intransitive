@@ -128,6 +128,28 @@ class Board():
 
         return legal_moves
 
+    # given a specific piece type, and a player, and the corresponding bitboard, finds all possible captures
+    def _get_legal_captures_for_type(self, type_bitboard, piece_type, player_str):
+        pseudo_moves = self._get_pseudo_moves_for_type(type_bitboard)
+        legal_captures = set()
+
+        for move in pseudo_moves:
+            dest_square = move[1]
+            
+            # if move is into own piece, move on
+            if player_str == 'blue':
+                if (self.blue_all & (1 << dest_square)) != 0:
+                    continue
+            elif (self.red_all & (1 << dest_square)) != 0:
+                continue
+
+            # move is into capturable
+            dest_type = self._get_type(dest_square)
+            if dest_type is not None and self.CAPTURES[piece_type] == dest_type:
+                legal_captures.add(move)
+            
+        return legal_captures
+
     # given a specific player, finds all legal moves (using current bitboard states)
     def _get_legal_moves(self, player_str):
         legal_moves = [0] * self.ACTION_SIZE
@@ -150,6 +172,35 @@ class Board():
             legal_moves[action] = 1
 
         return legal_moves
+
+    # given a specific player, finds all possible captures as bitboard (using current bitboard states)
+    def _get_capture_squares(self, player_str):
+
+        if player_str == 'blue':
+            legal_rock_captures = self._get_legal_captures_for_type(self.blue_rock, 'rock', 'blue')
+            legal_paper_captures = self._get_legal_captures_for_type(self.blue_paper, 'paper', 'blue')
+            legal_scissors_captures = self._get_legal_captures_for_type(self.blue_scissors, 'scissors', 'blue')
+        else:
+            legal_rock_captures = self._get_legal_captures_for_type(self.red_rock, 'rock', 'red')
+            legal_paper_captures = self._get_legal_captures_for_type(self.red_paper, 'paper', 'red')
+            legal_scissors_captures = self._get_legal_captures_for_type(self.red_scissors, 'scissors', 'red')
+
+        legal_capture_tuples = legal_rock_captures | legal_paper_captures | legal_scissors_captures
+
+        bitboard = 0
+
+        for orig_square, dest_square in legal_capture_tuples:
+            bitboard |= (1 << dest_square)
+
+        return bitboard
+
+    def _get_vulnerable_squares(self, player_str):
+        if player_str == 'blue':
+            opponent_str = 'red'
+        else:
+            opponent_str =  'blue'
+
+        return self._get_capture_squares(opponent_str)
 
     def _encode_action(self, orig_square, dest_square):
         orig_row, orig_col = divmod(orig_square, self.n)
