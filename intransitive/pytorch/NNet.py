@@ -86,7 +86,7 @@ class NNetWrapper(NeuralNet):
         board = self.board_to_planes(board)
         board = torch.FloatTensor(board.astype(np.float64))
         board = board.contiguous().to(args.device)
-        board = board.view(1, 7, self.board_x, self.board_y)
+        board = board.view(1, 9, self.board_x, self.board_y)
 
         self.nnet.eval()
         with torch.no_grad():
