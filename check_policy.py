@@ -6,7 +6,7 @@ from intransitive.pytorch.NNet import NNetWrapper
 
 game = Intransitive()
 nnet = NNetWrapper(game)
-nnet.load_checkpoint(folder='./temp_farmshare_v15/', filename='best.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare_v16/', filename='best.pth.tar')
 
 
 def decode_and_describe(board, action):
@@ -64,6 +64,19 @@ board2.red_scissors &= ~(1 << dest_square)
 board2.red_scissors |= (1 << dest_square)
 board2.red_all = board2.red_rock | board2.red_paper | board2.red_scissors
 board2.all = board2.blue_all | board2.red_all
+
+# --- Sanity check: verify the new tactical planes are actually flagging this position ---
+capture_squares = board2._get_capture_squares('blue')
+vulnerable_squares = board2._get_vulnerable_squares('blue')
+
+print(f"\n--- Sanity check on Test 2 board ---")
+print(f"Expected capture destination square: {dest_square}")
+print(f"Is dest_square flagged in capture_squares bitboard? {bool((capture_squares >> dest_square) & 1)}")
+
+planes = NNetWrapper.board_to_planes(board2)
+print(f"Plane 7 (capture opportunities) at dest_square row/col: {planes[7][dest_square // board2.n][dest_square % board2.n]}")
+print(f"Full plane 7 nonzero squares: {[(r, c) for r in range(9) for c in range(9) if planes[7][r][c] != 0]}")
+print(f"Full plane 8 nonzero squares: {[(r, c) for r in range(9) for c in range(9) if planes[8][r][c] != 0]}")
 
 run_test("Full board, one exposed red scissors", board2, board2._encode_action(orig_square, dest_square))
 
