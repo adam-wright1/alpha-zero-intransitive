@@ -14,7 +14,7 @@ from MCTS import MCTS
 log = logging.getLogger(__name__)
 
 CAPTURE_BONUS = 0.3
-PROXIMITY_BONUS = 0.01
+PROXIMITY_BONUS = 0.0 #disabling for test, was 0.01
 
 class Coach():
     """
@@ -100,9 +100,23 @@ class Coach():
 
             r = self.game.getGameEnded(board, self.curPlayer)
 
+            # THIS IS OLD VERSION
+            # if r != 0:
+            #     log.info(f'Episode ended after {episodeStep} plies with {capture_count} captures, result={r}')  # TODO this is debug
+            #     is_draw = abs(r) != 1  # draws use -0.3 (or whatever), wins/losses use ±1
+            #     result = []
+            #     for x in trainExamples:
+            #         if is_draw:
+            #             v = r  # same value for both players, no sign flip
+            #         else:
+            #             v = r * ((-1) ** (x[1] != self.curPlayer))
+            #         v = v + (x[3] or 0)
+            #         result.append((x[0], x[2], v))
+            #     return result
+
             if r != 0:
                 log.info(f'Episode ended after {episodeStep} plies with {capture_count} captures, result={r}')  # TODO this is debug
-                return [(x[0], x[2], r * ((-1) ** (x[1] != self.curPlayer)) + (x[3] or 0)) for x in trainExamples]
+                return [(x[0], x[2], (x[3] or 0)) for x in trainExamples]
         
     def learn(self):
         """
