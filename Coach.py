@@ -14,7 +14,7 @@ from MCTS import MCTS
 log = logging.getLogger(__name__)
 
 CAPTURE_BONUS = 0.3
-PROXIMITY_BONUS = 0.0 #disabling for test, was 0.01
+PROXIMITY_BONUS = 0.025 #testinggg
 
 class Coach():
     """
