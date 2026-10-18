@@ -126,7 +126,17 @@ class Coach():
                 for i, (s_idx, e_idx, _) in enumerate(ply_bonuses):
                     for x in trainExamples[s_idx:e_idx]:
                         x[3] = reward_to_go[i] if x[3] is None else x[3] + reward_to_go[i]
-                return [(x[0], x[2], (x[3] or 0)) for x in trainExamples]
+
+                is_draw = abs(r) != 1  # draws use -0.3 (or whatever), wins/losses use ±1
+                result = []
+                for x in trainExamples:
+                    if is_draw:
+                        v = r  # same value for both players, no sign flip
+                    else:
+                        v = r * ((-1) ** (x[1] != self.curPlayer))
+                    v = v + (x[3] or 0)
+                    result.append((x[0], x[2], v))
+                return result
         
     def learn(self):
         """
