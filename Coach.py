@@ -53,6 +53,7 @@ class Coach():
         episodeStep = 0
         last_examples_by_player = {1: (0, 0), -1: (0, 0)}
         capture_count = 0 # TODO this is debug
+        ply_bonuses = []
 
         while True:
             episodeStep += 1
@@ -87,16 +88,14 @@ class Coach():
             if captured:
                 shaped_bonus += CAPTURE_BONUS
 
-            for x in trainExamples[start_idx:len(trainExamples)]:
-                x[3] = shaped_bonus if x[3] is None else x[3] + shaped_bonus
+            ply_bonuses.append((start_idx, len(trainExamples), shaped_bonus))
 
             # penalize the opponent's most recent examples if their piece was just captured
             if captured:
                 opp = -mover
                 opp_range = last_examples_by_player[opp]
                 if opp_range is not None:
-                    for x in trainExamples[opp_range[0]:opp_range[1]]:
-                        x[3] = -CAPTURE_BONUS if x[3] is None else x[3] - CAPTURE_BONUS
+                    ply_bonuses.append((opp_range[0], opp_range[1], -CAPTURE_BONUS))
 
             r = self.game.getGameEnded(board, self.curPlayer)
 
@@ -116,6 +115,17 @@ class Coach():
 
             if r != 0:
                 log.info(f'Episode ended after {episodeStep} plies with {capture_count} captures, result={r}')  # TODO this is debug
+                gamma = 0.98
+                num_events = len(ply_bonuses)
+                reward_to_go = [0.0] * num_events
+                running = 0.0
+                for i in reversed(range(num_events)):
+                    running = ply_bonuses[i][2] + gamma * running
+                    reward_to_go[i] = running
+
+                for i, (s_idx, e_idx, _) in enumerate(ply_bonuses):
+                    for x in trainExamples[s_idx:e_idx]:
+                        x[3] = reward_to_go[i] if x[3] is None else x[3] + reward_to_go[i]
                 return [(x[0], x[2], (x[3] or 0)) for x in trainExamples]
         
     def learn(self):
