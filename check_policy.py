@@ -6,7 +6,7 @@ from intransitive.pytorch.NNet import NNetWrapper
 
 game = Intransitive()
 nnet = NNetWrapper(game)
-nnet.load_checkpoint(folder='./temp_farmshare_v20/', filename='temp.pth.tar')
+nnet.load_checkpoint(folder='./temp_farmshare_v21/', filename='temp.pth.tar')
 
 
 def decode_and_describe(board, action):

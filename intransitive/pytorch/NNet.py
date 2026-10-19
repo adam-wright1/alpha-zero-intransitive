@@ -86,7 +86,7 @@ class NNetWrapper(NeuralNet):
         board = self.board_to_planes(board)
         board = torch.FloatTensor(board.astype(np.float64))
         board = board.contiguous().to(args.device)
-        board = board.view(1, 9, self.board_x, self.board_y)
+        board = board.view(1, 7, self.board_x, self.board_y)
 
         self.nnet.eval()
         with torch.no_grad():
@@ -126,7 +126,7 @@ class NNetWrapper(NeuralNet):
         bitboards = [board.blue_rock, board.blue_paper, board.blue_scissors,
                     board.red_rock, board.red_paper, board.red_scissors]
 
-        planes = np.zeros((9, n, n), dtype=np.float32)  # 6 piece planes + 1 move-count plane + 2 tactical planes
+        planes = np.zeros((7, n, n), dtype=np.float32)  # 6 piece planes + 1 move-count plane
         for i in range(6):
             for square in range(n * n):
                 if (bitboards[i] >> square) & 1:
@@ -135,15 +135,5 @@ class NNetWrapper(NeuralNet):
                     planes[i][row][col] = 1
 
         planes[6] = board.moves_since_capture / 200.0
-
-        # NEW: tactical awareness planes, always from blue's perspective (matches canonical form convention)
-        capture_squares = board._get_capture_squares('blue')
-        vulnerable_squares = board._get_vulnerable_squares('blue')
-        for square in range(n * n):
-            row, col = divmod(square, n)
-            if (capture_squares >> square) & 1:
-                planes[7][row][col] = 1
-            if (vulnerable_squares >> square) & 1:
-                planes[8][row][col] = 1
 
         return planes
