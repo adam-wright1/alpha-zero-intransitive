@@ -11,6 +11,7 @@ from NeuralNet import NeuralNet
 
 import torch
 import torch.optim as optim
+import torch.nn.functional as F
 
 from .IntransitiveNNet import IntransitiveNNet as innet
 
@@ -23,6 +24,10 @@ args = dotdict({
     'num_channels': 64,  # shrunk from 512, per our earlier discussion
 })
 
+PI_WEIGHT = 1.0
+V_WEIGHT = 0.5
+CAPTURE_WEIGHT = 1.0
+VULN_WEIGHT = 1.0
 
 class NNetWrapper(NeuralNet):
     def __init__(self, game):
@@ -33,7 +38,7 @@ class NNetWrapper(NeuralNet):
 
     def train(self, examples):
         """
-        examples: list of examples, each example is of form (board, pi, v)
+        examples: list of examples, each example is of form (board, pi, v, capture_label, vuln_label)
         """
         optimizer = optim.Adam(self.nnet.parameters())
 
@@ -42,33 +47,43 @@ class NNetWrapper(NeuralNet):
             self.nnet.train()
             pi_losses = AverageMeter()
             v_losses = AverageMeter()
+            capture_losses = AverageMeter()
+            vuln_losses = AverageMeter()
 
             batch_count = int(len(examples) / args.batch_size)
 
             t = tqdm(range(batch_count), desc='Training Net')
             for _ in t:
                 sample_ids = np.random.randint(len(examples), size=args.batch_size)
-                boards, pis, vs = list(zip(*[examples[i] for i in sample_ids]))
+                boards, pis, vs, capture_labels, vuln_labels = list(zip(*[examples[i] for i in sample_ids]))
                 boards = np.array([self.board_to_planes(b) for b in boards])
                 boards = torch.FloatTensor(boards.astype(np.float64))
                 target_pis = torch.FloatTensor(np.array(pis))
                 target_vs = torch.FloatTensor(np.array(vs).astype(np.float64))
+                target_captures = torch.FloatTensor(np.array(capture_labels).astype(np.float64))
+                target_vulns = torch.FloatTensor(np.array(vuln_labels).astype(np.float64))    
 
                 # predict
                 boards = boards.contiguous().to(args.device)
                 target_pis = target_pis.contiguous().to(args.device)
                 target_vs = target_vs.contiguous().to(args.device)
+                target_captures = target_captures.contiguous().to(args.device)
+                target_vulns = target_vulns.contiguous().to(args.device)
 
                 # compute output
-                out_pi, out_v = self.nnet(boards)
+                out_pi, out_v, out_capture, out_vuln = self.nnet(boards)
                 l_pi = self.loss_pi(target_pis, out_pi)
                 l_v = self.loss_v(target_vs, out_v)
-                total_loss = l_pi + l_v
+                l_capture = F.binary_cross_entropy(out_capture, target_captures)
+                l_vuln = F.binary_cross_entropy(out_vuln, target_vulns)
+                total_loss = PI_WEIGHT * l_pi + V_WEIGHT * l_v + CAPTURE_WEIGHT * l_capture + VULN_WEIGHT * l_vuln
 
                 # record loss
                 pi_losses.update(l_pi.item(), boards.size(0))
                 v_losses.update(l_v.item(), boards.size(0))
-                t.set_postfix(Loss_pi=pi_losses, Loss_v=v_losses)
+                capture_losses.update(l_capture.item(), boards.size(0))
+                vuln_losses.update(l_vuln.item(), boards.size(0))
+                t.set_postfix(Loss_pi=pi_losses, Loss_v=v_losses, Loss_cap=capture_losses, Loss_vuln=vuln_losses)
 
                 # compute gradient and do SGD step
                 optimizer.zero_grad()
@@ -90,7 +105,7 @@ class NNetWrapper(NeuralNet):
 
         self.nnet.eval()
         with torch.no_grad():
-            pi, v = self.nnet(board)
+            pi, v, _, _ = self.nnet(board)
 
         # print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time()-start))
         return torch.exp(pi).data.cpu().numpy()[0], v.data.cpu().numpy()[0]

@@ -37,6 +37,10 @@ class IntransitiveNNet(nn.Module):
 
         self.fc4 = nn.Linear(256, 1)
 
+        self.fc5 = nn.Linear(256, 81)
+
+        self.fc6 = nn.Linear(256, 81)
+
     def forward(self, s):
         #                                                           s: batch_size x board_x x board_y
         s = s.view(-1, 7, self.board_x, self.board_y)                # batch_size x 1 x board_x x board_y
@@ -50,6 +54,8 @@ class IntransitiveNNet(nn.Module):
         s = F.dropout(F.relu(self.fc_bn2(self.fc2(s))), p=self.args.dropout, training=self.training)  # batch_size x 256
 
         pi = self.fc3(s)                                                                         # batch_size x action_size
-        v = self.fc4(s)                                                                          # batch_size x 1
+        v = self.fc4(s)
+        capture_pred = self.fc5(s)
+        vuln_pred = self.fc6(s)                                                                              # batch_size x 1
 
-        return F.log_softmax(pi, dim=1), torch.tanh(v)
+        return F.log_softmax(pi, dim=1), torch.tanh(v), torch.sigmoid(capture_pred), torch.sigmoid(vuln_pred)

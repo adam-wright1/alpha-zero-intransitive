@@ -62,7 +62,11 @@ class Coach():
             pi = self.mcts.getActionProb(canonicalBoard, temp=temp)
             sym = self.game.getSymmetries(canonicalBoard, pi)
             for b, p in sym:
-                trainExamples.append([b, self.curPlayer, p, None])
+                capture_bitboard = b._get_capture_squares('blue')
+                vuln_bitboard = b._get_vulnerable_squares('blue')
+                capture_label = [(capture_bitboard >> sq) & 1 for sq in range(81)]
+                vuln_label = [(vuln_bitboard >> sq) & 1 for sq in range(81)]
+                trainExamples.append([b, self.curPlayer, p, None, capture_label, vuln_label])
 
             start_idx = len(trainExamples) - len(sym)
             last_examples_by_player[self.curPlayer] = (start_idx, len(trainExamples))
@@ -110,7 +114,7 @@ class Coach():
                     else:
                         v = r * ((-1) ** (x[1] != self.curPlayer))
                     v = v + (x[3] or 0)
-                    result.append((x[0], x[2], v))
+                    result.append((x[0], x[2], v, x[4], x[5]))
                 return result
                     
     def learn(self):
