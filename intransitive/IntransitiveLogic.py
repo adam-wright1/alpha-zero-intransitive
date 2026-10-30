@@ -23,6 +23,17 @@ class Board():
     # number of possible move encodings
     ACTION_SIZE = 81 * 8  # 81 = 9x9 board squares, 8 = king-move directions
 
+    # precomputed square->square lookup tables for board symmetries
+    _N = 9
+    ANTIDIAGONAL_MAP = [0] * (_N * _N)
+    ROTATION_MAP = [0] * (_N * _N)
+    MAINDIAGONAL_MAP = [0] * (_N * _N)
+    for _sq in range(_N * _N):
+        _row, _col = divmod(_sq, _N)
+        ANTIDIAGONAL_MAP[_sq] = (_N - 1 - _col) * _N + (_N - 1 - _row)
+        ROTATION_MAP[_sq] = (_N - 1 - _row) * _N + (_N - 1 - _col)
+        MAINDIAGONAL_MAP[_sq] = _col * _N + _row
+
     def __init__(self, n):
         # Initializing board state with bitboard!
         self.n = n
@@ -93,9 +104,12 @@ class Board():
     # given a specific piece type (and player, implicit in bitboard) finds all moves (disregarding piece overlap weirdness)
     def _get_pseudo_moves_for_type(self, type_bitboard):
         moves = set()
-        for square in range(self.n * self.n):
-            if not (type_bitboard >> square) & 1:
-                continue
+        bb = type_bitboard
+        while bb:
+            lsb = bb & -bb
+            square = lsb.bit_length() - 1
+            bb ^= lsb
+
             row, col = divmod(square, self.n)
             for rd, cd in self.DIRECTIONS:
                 to_row, to_col = row + rd, col + cd
@@ -376,16 +390,13 @@ class Board():
         return transformed
 
     def _antidiagonal_board_map(self, square):
-        row, col = divmod(square, self.n)
-        return self._square(self.n - 1 - col, self.n - 1 - row)
+        return self.ANTIDIAGONAL_MAP[square]
 
     def _rotation_board_map(self, square):
-        row, col = divmod(square, self.n)
-        return self._square(self.n - 1 - row, self.n - 1 - col)
+        return self.ROTATION_MAP[square]
 
     def _maindiagonal_board_map(self, square):
-        row, col = divmod(square, self.n)
-        return self._square(col, row)
+        return self.MAINDIAGONAL_MAP[square]
 
     def transform_pi(self, pi, pi_map_fn):
         new = [0] * (self.n * self.n * 8)
@@ -424,9 +435,13 @@ class Board():
 
     def _min_distance_to_square(self, bitboard, target_square):
         best = None
-        for square in range(self.n * self.n):
-            if (bitboard >> square) & 1:
-                d = self._chebyshev_distance(square, target_square)
-                if best is None or d < best:
-                    best = d
+        bb = bitboard
+        while bb:
+            lsb = bb & -bb
+            square = lsb.bit_length() - 1
+            bb ^= lsb
+
+            d = self._chebyshev_distance(square, target_square)
+            if best is None or d < best:
+                best = d
         return best
